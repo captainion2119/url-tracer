@@ -5,10 +5,12 @@
 #   Save the url to a text file...
 # -------------------------------------------------
 
+
 import tkinter as tk
 import threading
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+import json
 
 # Selenium chrome driver -> For new webdrivers, workaround
 driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -20,22 +22,35 @@ driver.get("https://en.wikipedia.org")
 visited_urls = []
 continue_tracking = True
 
+# Trace dict, has count var, url array
+tracking_info = {
+    "total_count": 0,  
+    "urls_opened": []  
+}
+
 def track_urls():
-    global visited_urls
+    global visited_urls, tracking_info
     while continue_tracking:
         current_url = driver.current_url
 
         if current_url not in visited_urls:
             visited_urls.append(current_url)
 
+            tracking_info["total_count"] += 1
+            tracking_info["urls_opened"].append(current_url)
+
+        # print("Current URL:", current_url)
         driver.implicitly_wait(10)
 
 def dump_urls():
     # Save to file mechanic
-    with open("visited_urls.txt", "w") as file:
-        for url in visited_urls:
-            file.write(url + "\n")
-    print("Visited URLs saved to 'visited_urls.txt'")
+    global continue_tracking, tracking_info
+    continue_tracking = False
+
+    # Json dumping here...
+    with open("visited_urls.json", "w") as file:
+        json.dump(tracking_info, file, indent=4)
+    print("Visited URLs and tracking information saved to 'visited_urls.json'")
 
 def stop_tracking():
     global continue_tracking
